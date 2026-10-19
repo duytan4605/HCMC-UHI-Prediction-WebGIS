@@ -1,0 +1,66 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a"><link rel="manifest" href="/manifest.json"><link rel="icon" href="/icon.svg">
+<title>Dự báo đảo nhiệt TP.HCM</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--n:#0f172a;--b:#2563eb;--r:#e11d48}*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,'Segoe UI',sans-serif;height:100dvh;display:flex;flex-direction:column;background:#f8fafc;color:var(--n)}
+header{background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;padding:10px 14px}header h1{margin:0;font-size:16px}header p{margin:2px 0 0;font-size:11px;color:#94a3b8}
+#wrap{position:relative;flex:1;min-height:150px}#map{position:absolute;inset:0}
+.fl{position:absolute;z-index:500;background:#fff;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:6px 8px;font-size:12px}
+#legend{top:10px;right:10px;width:150px}#lbar{height:10px;border-radius:5px;margin:3px 0;background:linear-gradient(90deg,#00f,#0ff,#0a0,#ff0,#f00)}#lt{display:flex;justify-content:space-between;color:#475569}
+#bases{top:10px;left:10px;display:flex;gap:4px}#layers{bottom:10px;left:10px;display:flex;gap:4px;align-items:center}
+.chip{border:0;border-radius:8px;padding:7px 10px;background:#e2e8f0;font-weight:600;font-size:12px;color:var(--n)}.chip.on{background:var(--b);color:#fff}
+select{border:0;border-radius:8px;padding:6px;background:#e2e8f0;font-size:12px}
+#sheet{background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.2);padding:6px 14px 12px;max-height:52dvh;overflow:auto}
+#handle{width:44px;height:5px;background:#cbd5e1;border-radius:3px;margin:4px auto 8px}.tabs{display:flex;gap:6px;margin-bottom:8px}.tabs .chip{flex:1}
+label{display:block;margin-top:8px;font-size:13px}label b{color:var(--b)}input[type=range]{width:100%}
+.row{display:flex;gap:8px;margin-top:10px}.row .chip{flex:1;padding:9px 6px}
+#go{width:100%;margin-top:10px;padding:12px;border:0;border-radius:12px;color:#fff;font-weight:800;background:linear-gradient(135deg,#2563eb,#1d4ed8);box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.card{border-radius:12px;padding:8px;text-align:center;background:linear-gradient(135deg,#fff,#fff1f2);border:1px solid #fecdd3;border-left:4px solid var(--r)}
+.card b{display:block;font-size:19px;color:var(--r)}.card small{color:#64748b;font-size:10px}ul{padding-left:18px;margin:6px 0;font-size:12px}
+</style></head><body>
+<header><h1>🌡️ HCMC Urban Heat Island Forecast</h1><p>XGBoost · Landsat 8/9 · Google Earth Engine · SQLite</p></header>
+<div id="wrap"><div id="map"></div>
+<div class="fl" id="bases"><button id="bs" class="chip on" onclick="base(1)">🛰️ Vệ tinh</button><button id="br" class="chip" onclick="base(0)">🗺️ Bản đồ</button></div>
+<div class="fl" id="legend"><b id="lg">LST (°C)</b><div id="lbar"></div><div id="lt"><span>25</span><span>35</span><span>45</span></div></div>
+<div class="fl" id="layers"><button id="lf" class="chip on" onclick="setMode('f')">Dự báo</button><button id="lo" class="chip" onclick="setMode('o')">Quan trắc</button><select id="ol" onchange="mode=='o'&&setMode('o')"><option>LST</option><option>NDVI</option><option>NDBI</option><option>TVDI</option></select><select id="oy" onchange="mode=='o'&&setMode('o')"></select></div></div>
+<div id="sheet"><div id="handle"></div><div id="body">
+<div class="tabs"><button class="chip on" onclick="tab(0)">⚙️ Kịch bản</button><button class="chip" onclick="tab(1)">📍 Điểm ảnh</button><button class="chip" onclick="tab(2)">🗄️ Mô hình &amp; CSDL</button></div>
+<div class="pane"><label>📅 Năm dự báo: <b id="yv">2030</b><input id="year" type="range" min="2027" max="2035" value="2030"></label>
+<label>🌿 Thay đổi NDVI: <b id="nv">0</b><input id="dn" type="range" min="-0.3" max="0.3" step="0.05" value="0"></label>
+<label>🏢 Thay đổi NDBI: <b id="bv">0</b><input id="db" type="range" min="-0.3" max="0.3" step="0.05" value="0"></label>
+<div class="row"><button class="chip" onclick="preset(0.15,-0.1)">🌱 Kịch bản xanh</button><button class="chip" onclick="preset(-0.15,0.15)">🏗️ Bê tông hóa</button><button class="chip" onclick="preset(0,0)">↺ Gốc</button></div>
+<button id="go" onclick="setMode('f')">🚀 Chạy dự báo</button>
+<div class="cards"><div class="card"><b id="m1">–</b><small>LST trung bình</small></div><div class="card"><b id="m2">–</b><small>LST cực đại</small></div><div class="card"><b id="m3">–</b><small>điểm &gt; 36 °C</small></div></div></div>
+<div class="pane" hidden><div style="height:220px"><canvas id="chart"></canvas></div><small>Chạm bản đồ để chọn tối đa 3 điểm ảnh (nét liền: quan trắc, nét đứt: dự báo theo kịch bản).</small></div>
+<div class="pane" hidden><b>Độ tin cậy (kiểm định theo thời gian)</b><p id="val" style="font-size:13px"></p><b>Lịch sử chạy dự báo (lưu trong SQLite)</b><ul id="hist"></ul></div>
+</div></div>
+<script>
+const $=id=>document.getElementById(id),COL=['#2563eb','#e11d48','#16a34a'],j=u=>fetch(u).then(r=>{if(!r.ok)throw 0;return r.json()}),q=()=>`year=${$('year').value}&d_ndvi=${$('dn').value}&d_ndbi=${$('db').value}`;
+const map=L.map('map').setView([10.78,106.75],9),sat=L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{attribution:'Google'}).addTo(map),road=L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{attribution:'Google'});
+map.createPane('bnd').style.zIndex=450; const grp=L.layerGroup().addTo(map); let ov,ob,mode='f',pts=[],data=[],ch;
+for(let y=2017;y<=2026;y++)$('oy').add(new Option(y,y,0,y==2026));
+j('/api/boundary').then(g=>{const l=L.geoJSON(g,{pane:'bnd',style:{color:'red',weight:2.5,fillOpacity:0}}).addTo(map);map.fitBounds(l.getBounds())}).catch(()=>{});
+const LEG={LST:['#00f,#0ff,#0a0,#ff0,#f00','25','35','45'],NDVI:['#f00,#ff0,#90ee90,#0a0,#006400','-0.2','0.3','0.8'],NDBI:['#0a0,#ff0,#f00','-0.5','0','0.5'],TVDI:['#006400,#0a0,#ff0,#ffa500,#f00','0','0.5','1']};
+function leg(k){const l=LEG[k];$('lbar').style.background=`linear-gradient(90deg,${l[0]})`;$('lt').innerHTML=`<span>${l[1]}</span><span>${l[2]}</span><span>${l[3]}</span>`;$('lg').textContent=k+(k=='LST'?' (°C)':'')}
+function base(s){s?(map.addLayer(sat),map.removeLayer(road)):(map.addLayer(road),map.removeLayer(sat));$('bs').classList.toggle('on',!!s);$('br').classList.toggle('on',!s)}
+function sync(){$('yv').textContent=$('year').value;$('nv').textContent=$('dn').value;$('bv').textContent=$('db').value}
+['year','dn','db'].forEach(k=>$(k).oninput=sync);
+function preset(n,b){$('dn').value=n;$('db').value=b;sync();setMode('f')}
+function tab(i){document.querySelectorAll('.pane').forEach((p,k)=>p.hidden=k!=i);document.querySelectorAll('.tabs .chip').forEach((c,k)=>c.classList.toggle('on',k==i));if(i==1)draw();if(i==2)info()}
+$('handle').onclick=()=>{$('body').hidden=!$('body').hidden;setTimeout(()=>map.invalidateSize(),60)};
+async function setMode(m){mode=m;leg(m=='f'?'LST':$('ol').value);$('lf').classList.toggle('on',m=='f');$('lo').classList.toggle('on',m=='o');[ov,ob].forEach(l=>l&&map.removeLayer(l));
+ if(m=='f'){$('go').textContent='⏳ Đang tính…';try{const d=await j('/api/forecast_map?'+q());ov=L.imageOverlay(d.image,d.bounds,{opacity:.85}).addTo(map);
+  $('m1').textContent=d.mean.toFixed(1)+'°C';$('m2').textContent=d.max.toFixed(1)+'°C';$('m3').textContent=d.hot_pct.toFixed(0)+'%';refreshPts()}catch(e){alert('Không gọi được API dự báo')}$('go').textContent='🚀 Chạy dự báo'}
+ else try{const b=await j('/overlays/bounds.json');ob=L.imageOverlay(`/overlays/${$('ol').value}_${$('oy').value}.png`,[[b.south,b.west],[b.north,b.east]],{opacity:.9}).addTo(map)}catch(e){alert('Chưa có ảnh quan trắc: chạy export_overlays_cell.py')}}
+map.on('click',e=>{pts.push({lat:e.latlng.lat,lon:e.latlng.lng});if(pts.length>3)pts.shift();$('body').hidden=false;tab(1);refreshPts()});
+async function refreshPts(){grp.clearLayers();data=[];for(const [i,p] of pts.entries()){data[i]=await j(`/api/pixel?lat=${p.lat}&lon=${p.lon}&`+q());L.circleMarker([data[i].lat,data[i].lon],{radius:7,color:'#fff',weight:2,fillColor:COL[i],fillOpacity:1}).addTo(grp)}draw()}
+function draw(){if(ch)ch.destroy();ch=new Chart($('chart'),{type:'line',data:{datasets:data.flatMap((d,i)=>[{label:`Điểm ${i+1} quan trắc`,data:d.observed.map(o=>({x:o.year,y:o.lst})),borderColor:COL[i],tension:.3},{label:`Điểm ${i+1} dự báo`,data:d.forecast.map(o=>({x:o.year,y:o.lst})),borderColor:COL[i],borderDash:[6,4],tension:.3}])},options:{maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:12,font:{size:10}}}},scales:{x:{type:'linear',ticks:{stepSize:1}},y:{title:{display:true,text:'LST (°C)'}}}}})}
+async function info(){const h=await j('/api/history'),v=await j('/api/validation');
+ $('hist').innerHTML=h.map(r=>`<li>${r.ts.slice(5,16)} · ${r.year} · ΔNDVI ${r.d_ndvi} · ΔNDBI ${r.d_ndbi} → <b>${r.mean}°C</b> (${r.hot_pct}% &gt; 36°C)</li>`).join('')||'<li>Chưa có lượt chạy</li>';
+ $('val').innerHTML=v.rmse?`RMSE <b>${v.rmse}</b> °C · MAE <b>${v.mae}</b> °C · R² <b>${v.r2}</b><br><small>Mốc so sánh "giữ nguyên năm cuối": RMSE ${v.baseline_rmse} °C. Học 2017–2023, thử 2024–2026 (${v.n_test} mẫu).</small>`:'Chưa có: chạy <code>python backend\\validate_time.py</code>'}
+setMode('f');if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+</script></body></html>
