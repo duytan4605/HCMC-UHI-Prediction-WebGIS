@@ -1,143 +1,137 @@
-# 🌍 HCMC Urban Heat Island (UHI) Prediction & Analysis WebGIS
+# HCMC Urban Heat Island (UHI) — Hệ thống Dự báo Đảo nhiệt Đô thị TP.HCM
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Google Earth Engine](https://img.shields.io/badge/Google%20Earth%20Engine-API-green.svg)](https://earthengine.google.com/)
-[![Machine Learning](https://img.shields.io/badge/Machine%20Learning-XGBoost%20%7C%20Random%20Forest-orange.svg)](https://xgboost.readthedocs.io/)
-[![Framework](https://img.shields.io/badge/Framework-Streamlit-FF4B4B.svg)](https://streamlit.io/)
-[![License](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE)
-
-> **Đồ án chuyên ngành Tin học Môi trường**  
-> **Đề tài:** Ứng dụng Google Earth Engine và Machine Learning trong phân tích và dự báo hiện tượng Đảo nhiệt đô thị (Urban Heat Island - UHI) tại TP. Hồ Chí Minh.  
-> **Giảng viên hướng dẫn:** TS. Dương Thị Thúy Nga  
-> **Sinh viên thực hiện:** Nguyễn Duy Tân (MSSV: 1250080265) - Lớp 12_ĐH_THMT  
-> **Đơn vị:** Khoa Công nghệ Thông tin, Trường Đại học Tài nguyên và Môi trường TP. Hồ Chí Minh.
+**Đồ án chuyên ngành Tin học Tài nguyên và Môi trường**  
+**Đề tài:** Ứng dụng Google Earth Engine và Machine Learning phân tích, dự báo đảo nhiệt đô thị tại TP. Hồ Chí Minh.  
+**GVHD:** TS. Dương Thị Thúy Nga  
+**Sinh viên thực hiện:** Nguyễn Duy Tân (MSSV: 1250080265) — Lớp: 12_ĐH_THMT  
+**Đơn vị:** Khoa Công nghệ Thông tin, Trường Đại học Tài nguyên và Môi trường TP. Hồ Chí Minh.
 
 ---
 
-## 📌 Giới thiệu tổng quan
+## 1. Tổng quan Kiến trúc Hệ thống
 
-Thành phố Hồ Chí Minh đang trải qua tốc độ đô thị hóa và bê tông hóa nhanh chóng, dẫn đến sự suy giảm diện tích mảng xanh và gia tăng cường độ hiện tượng **Đảo nhiệt đô thị (Urban Heat Island - UHI)**.
-
-Hệ thống **HCMC-UHI-Prediction-WebGIS** cung cấp giải pháp toàn diện từ khâu thu thập dữ liệu viễn thám không gian lớn, trích xuất chỉ số sinh thái, huấn luyện mô hình dự báo học máy (Machine Learning) cho đến giao diện trực quan hóa tương tác WebGIS/Dashboard.
-
-### ✨ Các tính năng chính
-- **Thu thập & Tiền xử lý tự động (GEE):** Truy vấn chuỗi ảnh vệ tinh Landsat 8/9 và Sentinel-2 (giai đoạn 2017 – 2026), tự động lọc mây (Cloud Masking) và hiệu chỉnh khí quyển trên nền tảng đám mây Google Earth Engine.
-- **Trích xuất chỉ số sinh thái đa chiều:** Tự động tính toán Nhiệt độ bề mặt đất ($LST$), Chỉ số thực vật ($NDVI$), Chỉ số mật độ xây dựng ($NDBI$) và Chỉ số khô hạn thực vật - nhiệt độ ($TVDI$).
-- **Mô hình hóa dự báo AI:** Triển khai, đối chiếu và tối ưu hóa siêu tham số (GridSearchCV) trên hai thuật toán học máy dạng cây là **Random Forest** và **XGBoost**.
-- **Tương tác WebGIS & Dashboard:** Hiển thị lớp bản đồ nhiệt động, tra cứu giá trị theo tọa độ/khu vực, vẽ biểu đồ chuỗi thời gian và giả định kịch bản biến động mảng xanh (What-if analysis).
-
----
-
-## 🏗 Kiến trúc hệ thống (System Architecture)
-
-Hệ thống được thiết kế theo mô hình 3 tầng độc lập:
-
-1. **Tầng Dữ liệu (Data Layer):** Google Earth Engine API (Kho ảnh viễn thám Big Data) & MongoDB Atlas (Lưu trữ GeoJSON và chuỗi lịch sử/dự báo).
-2. **Tầng Xử lý & Mô hình hóa (Application & ML Layer):** Lập trình Python, thư viện `geemap`, `scikit-learn`, `xgboost` thực thi trích xuất chỉ số và suy luận dự báo.
-3. **Tầng Hiển thị (Presentation Layer):** Khung ứng dụng Streamlit tích hợp bản đồ tương tác Folium/Leaflet.
-
----
-
-## 📊 Kết quả thực nghiệm mô hình (Model Performance)
-
-Đánh giá trên tập dữ liệu kiểm thử (Test set) gồm hơn 19.000 điểm mẫu không gian - thời gian tại TP.HCM:
-
-| Mô hình | RMSE (°C) | MAE (°C) | Hệ số xác định ($R^2$) |
-| :--- | :---: | :---: | :---: |
-| **Random Forest** | 1.15 | 0.82 | 0.88 |
-| **XGBoost (Gốc)** | 1.12 | 0.79 | 0.89 |
-| **XGBoost (Đã tinh chỉnh - Best Model)** | **1.08** | **0.74** | **0.90** |
-
-*Mô hình XGBoost sau khi tinh chỉnh đạt độ chính xác vượt trội, đáp ứng tốt các chỉ tiêu kỹ thuật đề ra.*
-
----
-
-## 🛠 Công nghệ & Thư viện sử dụng
-
-- **Ngôn ngữ:** Python 3.10+, JavaScript (GEE Code Editor)
-- **Geospatial & Remote Sensing:** `earthengine-api`, `geemap`, `folium`, `geopandas`, `rasterio`
-- **Machine Learning & Data Science:** `scikit-learn`, `xgboost`, `pandas`, `numpy`, `joblib`
-- **Database:** MongoDB Atlas (NoSQL / GeoJSON)
-- **Web Framework:** `streamlit`, `streamlit-option-menu`, `plotly`
-
----
-
-## 🚀 Hướng dẫn cài đặt & Chạy ứng dụng
-
-### 1. Yêu cầu tiền đề
-- Đã cài đặt **Python 3.10** trở lên.
-- Có tài khoản **Google Earth Engine** đã được xác thực API key.
-
-### 2. Cài đặt môi trường
-
-```bash
-# 1. Clone repository về máy cá nhân
-git clone [https://github.com/duytan4605/HCMC-UHI-Prediction-WebGIS.git](https://github.com/duytan4605/HCMC-UHI-Prediction-WebGIS.git)
-cd HCMC-UHI-Prediction-WebGIS
-
-# 2. Tạo và kích hoạt môi trường ảo (Virtual Environment)
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-
-# 3. Cài đặt các thư viện phụ thuộc
-pip install -r requirements.txt
-
-```
-
-### 3. Cấu hình Authenticate Google Earth Engine
-
-Lần đầu chạy, bạn cần xác thực tài khoản GEE:
-
-```python
-import ee
-ee.Authenticate()
-ee.Initialize(project='tên-project-gee-của-bạn')
-
-```
-
-### 4. Khởi chạy ứng dụng WebGIS
-
-```bash
-streamlit run app.py
-
-```
-
-Truy cập giao diện tại địa chỉ cục bộ: `http://localhost:8501`
-
----
-
-## 📁 Cấu trúc thư mục dự án
+Toàn bộ hệ thống được xây dựng theo mô hình Client-Server hiện đại:
+- **Backend FastAPI**: Nguồn dữ liệu tập trung duy nhất, chịu trách nhiệm xử lý thuật toán học máy XGBoost, trích xuất xu hướng chuỗi thời gian NDVI/NDBI từ 10 năm dữ liệu Landsat 8/9, nội suy không gian phủ toàn TP.HCM, và quản trị cơ sở dữ liệu SQLite (`uhi.db`).
+- **Frontend Flutter (Đa nền tảng - Desktop Windows & Mobile & Web)**: Ứng dụng chính cho người dùng và trình chiếu báo cáo trước Hội đồng. Ứng dụng Flutter được thiết kế theo chuẩn Material 3, giao diện thích ứng (Responsive Layout): hiển thị dạng Dashboard chuyên nghiệp trên màn hình máy tính/máy chiếu (Windows Desktop) và dạng Tab trực quan trên thiết bị di động (Android / iOS / Web).
+- **WebGIS PWA**: Giao diện phụ trợ chạy trên trình duyệt hỗ trợ truy cập nhanh qua mạng nội bộ.
 
 ```text
-HCMC-UHI-Prediction-WebGIS/
-├── data/                   # Tệp dữ liệu CSV mẫu, GeoJSON ranh giới TP.HCM
-├── models/                 # Chứa các file mô hình đã huấn luyện (.joblib, .pkl)
-│   ├── best_uhi_model.joblib
-│   └── ultimate_uhi_model_10yrs.joblib
-├── notebooks/              # Jupyter Notebooks xử lý GEE, Train ML & GridSearch
-│   └── final_uhi_model_joblib.ipynb
-├── src/                    # Mã nguồn xử lý chính
-│   ├── gee_processing.py   # Lọc mây, tính LST, NDVI, TVDI
-│   ├── ml_pipeline.py      # Huấn luyện & suy luận mô hình ML
-│   └── db_connector.py     # Kết nối MongoDB Atlas
-├── app.py                  # Mã nguồn chính giao diện Streamlit WebGIS
-├── requirements.txt        # Danh sách thư viện Python
-├── LICENSE                 # Giấy phép mã nguồn mở
-└── README.md               # Tài liệu hướng dẫn dự án
-
+┌────────────────────────────────────────────────────────┐
+│             Ứng dụng Flutter Đa Nền Tảng               │
+│   • Windows Desktop App (.exe native cho Hội đồng)     │
+│   • Mobile App (Android / iOS)                        │
+└───────────────────────────┬────────────────────────────┘
+                            │ (Gọi REST API HTTP/JSON)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                   Backend FastAPI                      │
+│   • /api/forecast_map  : Heatmap nội suy theo kịch bản │
+│   • /api/pixel         : Chuỗi quan trắc + dự báo điểm │
+│   • /api/boundary      : Ranh giới hành chính TP.HCM   │
+│   • /api/validation    : Chỉ số kiểm định mô hình      │
+│   • /api/history       : Nhật ký các lượt mô phỏng     │
+│   • /overlays          : Ảnh vệ tinh quan trắc 10 năm  │
+└───────────────┬──────────────────────────┬─────────────┘
+                ▼                          ▼
+     CSDL SQLite (uhi.db)       Mô hình XGBoost (.joblib)
+   (8.000+ điểm ảnh, log chạy)   (NDVI, NDBI, tọa độ, năm)
 ```
 
 ---
 
-## 📝 Đóng góp & Bản quyền
+## 2. Các Tính năng Nổi bật của Ứng dụng Flutter
 
-Dự án thuộc quyền sở hữu trí tuệ của **Nguyễn Duy Tân** phục vụ cho Đồ án chuyên ngành Tin học Môi trường tại Trường Đại học Tài nguyên và Môi trường TP. Hồ Chí Minh.
+1. **Dự báo Đảo nhiệt theo Kịch bản Quy hoạch (2027 – 2035)**:
+   - Người dùng linh hoạt điều chỉnh: Năm dự báo, mức tăng giảm thảm phủ thực vật ($\Delta\text{NDVI}$) và mật độ xây dựng ($\Delta\text{NDBI}$).
+   - Nút chọn nhanh 3 kịch bản: **Hiện trạng gốc**, **Kịch bản phủ xanh đô thị**, và **Kịch bản bê tông hóa**.
+   - Thẻ chỉ số tổng hợp thời gian thực: Nhiệt độ bề mặt (LST) trung bình toàn thành phố, LST cực đại, tỷ lệ diện tích có nguy cơ nhiệt cao (> 36 °C).
+2. **Quan trắc Lịch sử Viễn thám (2017 – 2026)**:
+   - Chuyển đổi lớp bản đồ quan sát 4 chỉ số môi trường: **LST**, **NDVI**, **NDBI**, **TVDI** từ vệ tinh Landsat 8/9 qua 10 năm.
+   - Thước đo màu động (Dynamic Legend) phản ánh chính xác khoảng giá trị của từng chỉ số.
+3. **Phân tích Tương tác Chuỗi Thời gian Đa Điểm ảnh**:
+   - Chạm trực tiếp vào bất kỳ vị trí nào trên bản đồ TP.HCM để trích xuất điểm ảnh gần nhất (tối đa 3 điểm so sánh cùng lúc).
+   - Biểu đồ đường tương tác (`fl_chart`): Nét liền biểu diễn chuỗi quan trắc 10 năm (2017–2026), nét đứt biểu diễn xu hướng dự báo kịch bản (2027–2035).
+   - Bảng tổng hợp so sánh mức tăng nhiệt ($\Delta T$) và phân loại mức độ rủi ro đảo nhiệt (Thấp, Trung bình, Cao, Rất cao).
+4. **Kiểm định Khoa học Mô hình (Model Validation)**:
+   - Kiểm định theo phương pháp chia cắt thời gian độc lập (**Time-split Cross-Validation**): Huấn luyện trên chuỗi 2017–2023, kiểm định ngoài mẫu trên giai đoạn 2024–2026 với hơn 23.900 điểm ảnh.
+   - Trình bày đầy đủ các chỉ số: $RMSE = 3.20\text{ }^\circ\text{C}$, $MAE = 2.47\text{ }^\circ\text{C}$, $R^2 = 0.39$, so sánh với Baseline Persistence Model ($2.85\text{ }^\circ\text{C}$).
+5. **Nhật ký Mô phỏng & Quản trị CSDL**:
+   - Tự động ghi lại lịch sử các lần chạy kịch bản vào bảng `run_log` trong CSDL SQLite.
+6. **Lớp Bản đồ Đa dạng & Ranh giới TP.HCM**:
+   - Hỗ trợ chuyển đổi giữa bản đồ đường phố (OpenStreetMap), bản đồ ảnh vệ tinh (Google/Esri Satellite), và bản đồ nền tối (CartoDB Dark).
+   - Vẽ ranh giới địa giới hành chính TP. Hồ Chí Minh sắc nét.
 
-Mọi ý kiến đóng góp hoặc thắc mắc xin vui lòng liên hệ qua Email: `1250080265@sv.hcmunre.edu.vn`.
+---
 
+## 3. Hướng dẫn Cài đặt & Khởi chạy
+
+### Bước 1: Khởi động Backend FastAPI
+Mở terminal tại thư mục gốc của đồ án:
+```powershell
+# Kích hoạt môi trường ảo Python
+.venv\Scripts\activate
+
+# Cài đặt thư viện nếu chưa cài (đã loại bỏ hoàn toàn streamlit)
+pip install -r requirements.txt
+
+# Di chuyển vào thư mục backend và chạy server
+cd DACN
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+> Server sẽ lắng nghe tại: `http://127.0.0.1:8000`. Hãy giữ cửa sổ này hoạt động khi demo.
+
+### Bước 2: Chạy Ứng dụng Flutter
+
+#### A. Chạy trên Windows Desktop (Khuyến nghị cho Hội đồng & Trình chiếu):
+Mở một terminal mới:
+```powershell
+cd DACN\frontend\mobile_app_flutter
+flutter run -d windows
+```
+Hoặc mở trực tiếp file chạy Release đã được build sẵn:
+```
+DACN\frontend\mobile_app_flutter\build\windows\x64\runner\Release\flutter_application_1.exe
 ```
 
+#### B. Chạy trên Thiết bị Di động (Android / iOS):
+- **Trên máy ảo Android Emulator**: Chạy `flutter run` (ứng dụng tự động nhận diện `http://10.0.2.2:8000`).
+- **Trên điện thoại thật**: Kết nối chung mạng Wi-Fi với máy tính, mở tab **Cài đặt** trong ứng dụng và nhập IP máy tính (ví dụ `http://192.168.1.15:8000`).
+
+#### C. Chạy trên Web (Chrome / Edge):
+```powershell
+cd DACN\frontend\mobile_app_flutter
+flutter run -d chrome
 ```
+
+---
+
+## 4. Cấu trúc Mã nguồn
+
+```text
+DACN/
+├── backend/
+│   ├── main.py              # FastAPI Server (XGBoost + SQLite + Heatmap)
+│   ├── load_db.py           # Nạp CSV vào CSDL SQLite (uhi.db)
+│   ├── validate_time.py     # Kiểm định mô hình theo thời gian (2017-2023 / 2024-2026)
+│   └── export_overlays.py   # Xuất ảnh quan trắc LST/NDVI/NDBI/TVDI 10 năm
+├── frontend/
+│   ├── mobile_app_flutter/  # Ứng dụng Flutter chính (Windows Desktop + Mobile)
+│   │   ├── lib/
+│   │   │   ├── api.dart     # REST API Client & Data Models
+│   │   │   └── main.dart    # Giao diện chính Material 3 Responsive
+│   │   ├── pubspec.yaml     # Cấu hình thư viện Flutter
+│   │   └── build/windows/   # Bản build Windows native executable
+│   └── index.html           # WebGIS PWA
+├── data/                    # SQLite uhi.db, GeoJSON, overlays vệ tinh
+└── models/                  # ultimate_uhi_model_10yrs.joblib
+```
+
+---
+
+## 5. Quy chuẩn Báo cáo Khoa CNTT - HCMUNRE
+
+- Đồ án được chuẩn bị theo đúng thể thức Hướng dẫn trình bày Đồ án chuyên ngành Đại học của Khoa Công nghệ Thông tin - Trường ĐH Tài nguyên và Môi trường TP.HCM:
+  - Khổ giấy A4, font Times New Roman, size 13, giãn dòng 1.5 lines.
+  - Cấu trúc đầy đủ các trang bìa, lời cảm ơn, lời cam đoan, nhận xét của GVHD & GVPB, lịch làm việc, tóm tắt, mục lục, danh mục sơ đồ hình ảnh, danh mục bảng.
+  - Nội dung 3 chương chuẩn mực: Chương 1 Tổng quan tài liệu, Chương 2 Phương pháp thực hiện (thiết kế hệ thống, thuật toán, kiến trúc 1 FastAPI - Flutter Client), Chương 3 Cài đặt thử nghiệm, kết quả và đánh giá.
+  - Danh mục tài liệu tham khảo chuẩn IEEE với trên 10 tài liệu khoa học uy tín.
